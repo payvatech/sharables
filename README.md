@@ -196,8 +196,8 @@ The `owner` array is optional. Each entry represents a beneficial owner with 25%
 | `annual_revenue` | number | Estimated annual revenue in USD. |
 | `average_ticket_size` | number | Average transaction amount in USD. |
 | `monthly_volume` | number | Expected monthly transaction volume in USD. |
-| `refund_policy` | string | Return/refund policy. |
-| `fulfillment_timeline` | string | Average days between purchase and delivery. |
+| `refund_policy` | object | Return/refund policy (see Refund Policy below). |
+| `fulfillment_timeline` | object | Fulfillment timeline (see Fulfillment Timeline below). |
 | `recurring_billing` | boolean | Whether the merchant offers subscriptions. |
 | `documents` | object | Supporting documents — EIN letter, formation docs, business license (file references or URLs). |
 
@@ -219,7 +219,7 @@ A separate contact person managing the integration (may or may not be an owner).
 |-------|------|-------------|
 | `processing_history.current_processor` | string | Current payment processor name. |
 | `processing_history.has_been_terminated` | boolean | Whether the merchant has ever had an account terminated or placed on MATCH/TMF. |
-| `processing_history.chargeback_history` | string | Chargeback ratio or summary. |
+| `processing_history.chargeback_history` | object | Chargeback history (see Chargeback History below). |
 
 ### Optional Fields — Bank Account
 
@@ -254,122 +254,156 @@ If your platform already has the merchant's banking information, you can pass it
 | `id_issuing_country` | string | Issuing country (ISO 3166-1 alpha-2). |
 | `id_expiration_date` | string | Expiration date in `YYYY-MM-DD` format. |
 
+### Refund Policy Object (used in business.refund_policy)
+
+| Field | Type | Description |
+|-------|------|-------------|
+| `type` | enum | `full_refund`, `partial_refund`, `store_credit`, `exchange_only`, `no_refunds`. |
+| `window_days` | number | Number of days from purchase that refunds are accepted (e.g. `30`, `60`, `90`). Use `0` for no refund window. |
+| `notes` | string | Additional details about the refund policy. |
+
+### Fulfillment Timeline Object (used in business.fulfillment_timeline)
+
+| Field | Type | Description |
+|-------|------|-------------|
+| `min_days` | number | Minimum days from purchase to delivery (e.g. `0` for instant/digital, `1` for next-day). |
+| `max_days` | number | Maximum days from purchase to delivery. Longer timelines increase BNPL risk. |
+| `type` | enum | `instant`, `physical_shipment`, `made_to_order`, `pre_order`, `subscription`. Affects risk profile even with same delivery window. |
+| `notes` | string | Additional details about fulfillment. |
+
+### Chargeback History Object (used in processing_history.chargeback_history)
+
+| Field | Type | Description |
+|-------|------|-------------|
+| `ratio_percent` | number | Chargeback ratio as a percentage (e.g. `0.5` for 0.5%). Industry threshold is typically 1%. |
+| `monthly_count` | number | Average monthly chargeback count. |
+| `period_months` | number | Number of months the data covers (e.g. `12`, `6`, `3`). Recent data is more relevant. |
+| `notes` | string | Additional context (e.g. seasonal spikes, dispute reasons). |
+
 ---
 
 ## Minimum Viable Request
 
 ```json
 {
-  "external_merchant_id": "merchant_123",
+  "external_merchant_id": "creator_8842",
   "applicant": {
-    "first_name": "Sarah",
-    "last_name": "Admin",
-    "email": "sarah@acmecorp.com"
+    "first_name": "Marcus",
+    "last_name": "Rivera",
+    "email": "marcus@sharpactionpicks.com"
   },
   "business": {
-    "legal_name": "Acme Corp LLC"
+    "legal_name": "Sharp Action Picks LLC"
   }
 }
 ```
 
-This creates a token and starts the flow. The applicant (Sarah) will go through the iframe to create her Payva account. Owner details, banking, and everything else can be filled in during Payva's onboarding process.
+This creates a token and starts the flow. The applicant (Marcus) will go through the iframe to create his Payva account. Owner details, banking, and everything else can be filled in during Payva's onboarding process.
 
 ## Full Request Example
 
 ```json
 {
-  "external_merchant_id": "merchant_12345",
-  "mode": "light",
-  "ip_address": "192.168.1.1",
+  "external_merchant_id": "creator_8842",
+  "mode": "dark",
+  "ip_address": "72.34.112.88",
   "beneficial_owners_complete": true,
   "consent": {
     "terms_accepted_at": "2026-03-18T12:00:00.000Z",
     "ofac_consent": true
   },
   "applicant": {
-    "first_name": "Sarah",
-    "last_name": "Admin",
-    "email": "sarah@acmecorp.com",
-    "phone_number": "+15559998888",
+    "first_name": "Tanya",
+    "last_name": "Moss",
+    "email": "tanya@sharpactionpicks.com",
+    "phone_number": "+17025559301",
     "role": "administrator"
-  },
-  "primary_contact": {
-    "first_name": "John",
-    "last_name": "Doe",
-    "email": "john@acmecorp.com",
-    "phone_number": "+15551234567",
-    "title": "CEO"
   },
   "owner": [
     {
-      "first_name": "John",
-      "last_name": "Doe",
-      "email": "john@acmecorp.com",
-      "phone_number": "+15551234567",
+      "first_name": "Marcus",
+      "last_name": "Rivera",
+      "email": "marcus@sharpactionpicks.com",
+      "phone_number": "+17025558427",
       "citizenship": "US",
       "address": {
-        "address_line_1": "123 Main St",
-        "address_line_2": "Suite 100",
-        "city": "Austin",
-        "state": "TX",
-        "zip": "78701",
+        "address_line_1": "4201 S Eastern Ave",
+        "address_line_2": "Unit 12",
+        "city": "Las Vegas",
+        "state": "NV",
+        "zip": "89119",
         "country": "US"
       },
-      "dob": "1985-06-15",
-      "ssn": "123-45-6789",
+      "dob": "1991-08-14",
+      "ssn": "612-44-8823",
       "title": "CEO",
       "is_control_prong": true,
       "is_politically_exposed": false,
       "ownership_percent": 100,
       "identity_document": {
         "id_type": "drivers_license",
-        "id_number": "DL123456789",
-        "id_issuing_state": "TX",
+        "id_number": "NV2847561",
+        "id_issuing_state": "NV",
         "id_issuing_country": "US",
-        "id_expiration_date": "2028-06-15"
+        "id_expiration_date": "2029-08-14"
       }
     }
   ],
   "business": {
     "entity_type": "llc",
-    "tax_id": "12-3456789",
-    "legal_name": "Acme Corp LLC",
-    "dba_name": "Acme",
-    "state_of_incorporation": "TX",
-    "start_year": 2019,
-    "number_of_employees": 25,
-    "phone_number": "+15559876543",
+    "tax_id": "88-4219753",
+    "legal_name": "Sharp Action Picks LLC",
+    "dba_name": "Sharp Action",
+    "state_of_incorporation": "NV",
+    "start_year": 2022,
+    "number_of_employees": 3,
+    "phone_number": "+17025550199",
     "address": {
-      "address_line_1": "456 Business Ave",
-      "city": "Austin",
-      "state": "TX",
-      "zip": "78702",
+      "address_line_1": "4201 S Eastern Ave",
+      "address_line_2": "Unit 12",
+      "city": "Las Vegas",
+      "state": "NV",
+      "zip": "89119",
       "country": "US"
     },
-    "email": "info@acmecorp.com",
-    "industry": "retail",
-    "mcc_code": "5411",
+    "email": "support@sharpactionpicks.com",
+    "industry": "education",
+    "mcc_code": "5818",
     "business_model": "ecommerce",
-    "product_type": "physical_goods",
-    "offer_description": "Premium outdoor gear and camping equipment",
-    "website": "https://acmecorp.com",
-    "annual_revenue": 2500000,
-    "average_ticket_size": 150,
-    "monthly_volume": 200000,
-    "refund_policy": "30-day full refund",
-    "fulfillment_timeline": "3-5 business days",
-    "recurring_billing": false
+    "product_type": "digital_goods",
+    "offer_description": "Premium sports betting masterclass with bankroll management system, proprietary analytics dashboard, and lifetime access to a private Discord community with daily picks and live analysis",
+    "website": "https://sharpactionpicks.com",
+    "annual_revenue": 480000,
+    "average_ticket_size": 997,
+    "monthly_volume": 65000,
+    "refund_policy": {
+      "type": "partial_refund",
+      "window_days": 14,
+      "notes": "Refunds prorated based on course completion. No refunds after 50% completion."
+    },
+    "fulfillment_timeline": {
+      "min_days": 0,
+      "max_days": 0,
+      "type": "instant",
+      "notes": "Immediate access to course portal and Discord upon purchase"
+    },
+    "recurring_billing": true
   },
   "processing_history": {
     "current_processor": "Stripe",
     "has_been_terminated": false,
-    "chargeback_history": "< 0.5%"
+    "chargeback_history": {
+      "ratio_percent": 1.2,
+      "monthly_count": 5,
+      "period_months": 6,
+      "notes": "Higher ratio due to course launch in Q4 2025 — new refund policy reduced chargebacks by 60% in Q1 2026"
+    }
   },
   "bank_account": {
     "plaid_access_token": null,
-    "account_holder_name": "Acme Corp LLC",
-    "routing_number": "021000021",
-    "account_number": "123456789012",
+    "account_holder_name": "Sharp Action Picks LLC",
+    "routing_number": "122400724",
+    "account_number": "9817234560",
     "account_type": "checking"
   }
 }
@@ -384,7 +418,7 @@ This creates a token and starts the flow. The applicant (Sarah) will go through 
 - **Banking data** can be provided via a Plaid access token (preferred) or via manual account/routing numbers which will require manual review by our team and likely have to communicate with the merchant
 - **If data is incomplete**, the merchant is shown a prompt(hyperlink) after authentication to finish their application in Payva's onboarding form
 - **Sensitive data** (SSN, bank account numbers, etc.) all application data is proxied directly to our vault provider.
-- **Consent data** is stored alongside the application. If the platform collected consent (terms, credit check, e-sign, privacy policy, ACH authorization), it carries through to the merchant's record. Missing consents are collected during onboarding.
+- **Consent data** — platforms can pass ToS acceptance and OFAC consent. All other consents (credit check, e-sign, privacy policy, ACH authorization) are collected by Payva directly during onboarding using our specific legal language.
 
 ---
 
